@@ -1,0 +1,71 @@
+import static org.mockito.Mockito.*;
+
+import com.partnercheck.onboarding.onboarding.dto.PaymentValueAndCompanySize;
+import com.partnercheck.onboarding.onboarding.dto.UpdateStockDto;
+import com.partnercheck.onboarding.onboarding.model.Coupon;
+import com.partnercheck.onboarding.onboarding.service.CouponClient;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
+
+public class CouponServiceTest {
+
+    private CouponService couponService;
+    private CouponClient couponClient;
+
+    @BeforeEach
+    public void setUp() {
+        couponClient = mock(CouponClient.class);
+        couponService = new CouponService(couponClient);
+    }
+
+    @Test
+    public void addCoupon_ValidCoupon_ShouldApplyDiscount() {
+        // Arrange
+        PaymentValueAndCompanySize payment = new PaymentValueAndCompanySize();
+        String couponName = "VALID_COUPON";
+        Coupon coupon = new Coupon();
+        coupon.setDiscountPercentage(10); // Assuming a 10% discount
+        when(couponClient.getCoupon(couponName)).thenReturn(Mono.just(coupon));
+
+        // Act
+        couponService.addCoupon(payment, couponName).block();
+
+        // Assert
+        // Check if the discount has been applied correctly
+        // You may need to customize this assertion based on your actual logic
+        assert(payment.getDiscountPercentage() == 10);
+    }
+
+    @Test
+    public void addCoupon_InvalidCoupon_ShouldNotApplyDiscount() {
+        // Arrange
+        PaymentValueAndCompanySize payment = new PaymentValueAndCompanySize();
+        String couponName = "INVALID_COUPON";
+        Coupon coupon = new Coupon();
+        coupon.setValid(false);
+        when(couponClient.getCoupon(couponName)).thenReturn(Mono.just(coupon));
+
+        // Act
+        couponService.addCoupon(payment, couponName).block();
+
+        // Assert
+        // Check if the discount has not been applied
+        // You may need to customize this assertion based on your actual logic
+        assert(payment.getDiscountPercentage() == 0);
+    }
+
+    @Test
+    public void updateStock_ShouldCallClientUpdateStock() {
+        // Arrange
+        UpdateStockDto dto = new UpdateStockDto();
+        dto.setName("Product Name");
+
+        // Act
+        couponService.updateStock(dto);
+
+        // Assert
+        // Verify that client.updateStock was called with the correct argument
+        verify(couponClient, times(1)).updateStock(dto.getName());
+    }
+}
